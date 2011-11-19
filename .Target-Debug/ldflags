@@ -1,0 +1,1 @@
+-L"C:/bada/sdk/Model/WaveHVGA/Target" -L"C:/bada/sdk/PhotoClown/lib" -shared -mthumb -mthumb-interwork -mfpu=vfp -mfloat-abi=softfp -o"CameraCapture.exe"
