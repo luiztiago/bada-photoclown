@@ -1335,6 +1335,18 @@ CameraForm::OnCameraPreviewed ( Osp::Base::ByteBuffer& previewedData , result r)
 				return;
 			}
 		}
+
+Image* pImage = new Image();
+		pImage->Construct();
+	    Rectangle rect(FORM_X, FORM_Y, FORM_WIDTH, FORM_HEIGHT);
+
+		Bitmap* pBitmap = pImage->DecodeN(L"/Res/bada.jpg", BITMAP_PIXEL_FORMAT_RGB565, 50, 50 );
+		r = __pOverlayCanvas -> DrawBitmap(rect, *pBitmap);
+		if (IsFailed(r)){
+			AppLog("nao carregou imagem");
+		}
+
+
 /*
 		if ( __startType != CAMERA_START_NO_PREVIEW_WITHOUT_CALLBACK )
 		{
