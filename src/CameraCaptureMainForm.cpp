@@ -5,14 +5,6 @@
 
 #define ID_BUTTON_CAMERA                      0x1001
 
-#define ID_BUTTON_CALLBACK_CHECKED		0x1010
-#define ID_BUTTON_CALLBACK_UNCHECKED		0x1011
-#define ID_BUTTON_CALLBACK_SELECTED                      0x1012
-
-#define ID_BUTTON_PREVIEW_CHECKED		0x1020
-#define ID_BUTTON_PREVIEW_UNCHECKED		0x1021
-#define ID_BUTTON_PREVIEW_SELECTED                      0x1022
-
 using namespace Osp::Base;
 using namespace Osp::Ui;
 using namespace Osp::Ui::Controls;
@@ -51,8 +43,6 @@ MainForm::Construct()
 result
 MainForm::OnInitializing(void)
 {
-        if( __InitializePreviewCheckButton()!= E_SUCCESS ) return E_OUT_OF_MEMORY;
-        if( __InitializeCallbackCheckButton()!= E_SUCCESS ) return E_OUT_OF_MEMORY;
         if( __InitializeHeader()!= E_SUCCESS ) return E_OUT_OF_MEMORY;
         if( __InitializeFooter()!= E_SUCCESS ) return E_OUT_OF_MEMORY;
 
@@ -87,39 +77,26 @@ MainForm::OnActionPerformed(const Osp::Ui::Control& source, int actionId)
 
         AppLog("MainForm::OnActionPerformed:battery level = %d\n",batterylevel);
 
+        __isPreviewScreenEnabled = true;
+        __isCallbackEnabled = true;
+
         switch( actionId )
         {
 
         case ID_BUTTON_CAMERA:
+			{
+				if( (BATTERY_CRITICAL == batterylevel || BATTERY_EMPTY == batterylevel) && !isCharging )
 				{
-					if( (BATTERY_CRITICAL == batterylevel || BATTERY_EMPTY == batterylevel) && !isCharging )
-					{
-						AppLog("Low Battery\n");
-						msgBoxError.Construct(L"WARNING",L"Low Battery.",MSGBOX_STYLE_NONE,2000);
-						msgBoxError.ShowAndWait(msgBoxErrorResult);
-					}
-					else
-					{
-						__StartCameraForm( pFrame, CAMERA_FORM  );
-					}
+					AppLog("Low Battery\n");
+					msgBoxError.Construct(L"WARNING",L"Low Battery.",MSGBOX_STYLE_NONE,2000);
+					msgBoxError.ShowAndWait(msgBoxErrorResult);
 				}
-                break;
-        case ID_BUTTON_PREVIEW_CHECKED:
-        	__isPreviewScreenEnabled = true;
-        	break;
-        case ID_BUTTON_PREVIEW_UNCHECKED:
-        	__isPreviewScreenEnabled = false;
-        	break;
-        case ID_BUTTON_PREVIEW_SELECTED:
-        	break;
-        case ID_BUTTON_CALLBACK_CHECKED:
-        	__isCallbackEnabled = true;
-        	break;
-        case ID_BUTTON_CALLBACK_UNCHECKED:
-        	__isCallbackEnabled = false;
-        	break;
-        case ID_BUTTON_CALLBACK_SELECTED:
-        	break;
+				else
+				{
+					__StartCameraForm( pFrame, CAMERA_FORM  );
+				}
+			}
+			break;
         default:
         	break;
         }
@@ -201,21 +178,11 @@ bool
 MainForm::__StartCameraForm( Frame *pFrame, StartFormType formType )
 {
         result r = E_SUCCESS;
-        CameraStartType cameraStartType = CAMERA_START_NONE;
-        if ( __isPreviewScreenEnabled )
-        {
-                if ( __isCallbackEnabled )
-                        cameraStartType = CAMERA_START_PREVIEW_WITH_CALLBACK;
-        	else
-                        cameraStartType = CAMERA_START_PREVIEW_WITHOUT_CALLBACK;
-        }
-        else
-        {
-        	if ( __isCallbackEnabled )
-                        cameraStartType = CAMERA_START_NO_PREVIEW_WITH_CALLBACK;
-        	else
-                        cameraStartType = CAMERA_START_NO_PREVIEW_WITHOUT_CALLBACK;
-        }
+        CameraStartType cameraStartType = CAMERA_START_PREVIEW_WITH_CALLBACK;
+
+        //CAMERA_START_PREVIEW_WITHOUT_CALLBACK
+        //CAMERA_START_NO_PREVIEW_WITH_CALLBACK
+        //CAMERA_START_NO_PREVIEW_WITHOUT_CALLBACK
 
         if ( __pStartForm )
         {
@@ -299,70 +266,3 @@ CATCH:
 		return false;
 }
 
-result
-MainForm::__InitializePreviewCheckButton()
-{
-        result r = E_SUCCESS;
-
-        __pCheckBtnPreview = new CheckButton;
-        if( !__pCheckBtnPreview) return E_OUT_OF_MEMORY;
-
-        r = __pCheckBtnPreview->Construct( Rectangle(X_FROM_LEFT(0,BTN_WIDTH,BTN_WIDTH_MARGIN)
-        											,Y_FROM_TOP(1,BTN_HEIGHT,BTN_HEIGHT_MARGIN)
-        											,BTN_WIDTH
-        											,BTN_HEIGHT)
-        											,CHECK_BUTTON_STYLE_MARK, BACKGROUND_STYLE_DEFAULT, false, String("Direct Preview"));
-        if( IsFailed(r) )
-        {
-        	AppLogException( "Preview button constructing has failed." );
-        	delete __pCheckBtnPreview;
-        	return r;
-        }
-
-        r = AddControl(*__pCheckBtnPreview);
-        if( IsFailed(r))
-        {
-        	AppLogException( "Adding Preview button has failed." );
-        	delete __pCheckBtnPreview;
-        	return r;
-        }
-
-        __pCheckBtnPreview->SetActionId(ID_BUTTON_PREVIEW_CHECKED, ID_BUTTON_PREVIEW_UNCHECKED, ID_BUTTON_PREVIEW_SELECTED);
-        __pCheckBtnPreview->AddActionEventListener(*this);
-
-        return r;
-}
-
-
-result
-MainForm::__InitializeCallbackCheckButton()
-{
-        result r = E_SUCCESS;
-
-        __pCheckBtnCallback = new CheckButton;
-        if( !__pCheckBtnCallback) return E_OUT_OF_MEMORY;
-
-        r = __pCheckBtnCallback->Construct( Rectangle(X_FROM_LEFT(0,BTN_WIDTH,BTN_WIDTH_MARGIN)
-        											,Y_FROM_TOP(2,BTN_HEIGHT,BTN_HEIGHT_MARGIN)
-        											,BTN_WIDTH,BTN_HEIGHT)
-        											,CHECK_BUTTON_STYLE_MARK,BACKGROUND_STYLE_DEFAULT, false, String("Callback"));
-        if( IsFailed(r) )
-        {
-        	AppLogException( "Callback button constructing has failed." );
-        	delete __pCheckBtnCallback;
-        	return r;
-        }
-
-        r = AddControl(*__pCheckBtnCallback);
-        if( IsFailed(r))
-        {
-        	AppLogException( "Adding Callback button has failed." );
-        	delete __pCheckBtnCallback;
-        	return r;
-        }
-
-        __pCheckBtnCallback->SetActionId(ID_BUTTON_CALLBACK_CHECKED, ID_BUTTON_CALLBACK_UNCHECKED, ID_BUTTON_CALLBACK_SELECTED);
-        __pCheckBtnCallback->AddActionEventListener(*this);
-
-        return r;
-}

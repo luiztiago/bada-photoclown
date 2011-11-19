@@ -50,8 +50,6 @@ public:
 private:
     result __InitializeHeader(void);
 	result __InitializeFooter(void);
-	result __InitializePreviewCheckButton();
-	result __InitializeCallbackCheckButton();
 
 	bool __StartCameraForm( Osp::Ui::Controls::Frame *pFrame, StartFormType formType );
 
