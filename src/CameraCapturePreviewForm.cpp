@@ -22,7 +22,92 @@ using namespace Osp::App;
 #define DEVICE_LANDSCAPE 2
 #define DEVICE_LANDSCAPE_REVERSE 3
 
+class MyFacebookClass :
+        	public Osp::Social::Services::ISnsAuthenticatorListener,
+        	public Osp::Social::Services::ISnsGatewayListener,
+        	public Osp::Social::Services::ISnsContentListener{
+        		Osp::Social::Services::SnsGateway* pSnsGateway;
+        		Osp::Social::Services::SnsAuthenticator* pSNSAuthenticator;
+        		Osp::Social::Services::SnsAuthResult* pSNSAuthResult;
+        		result Construct(void);
+        		result Authenticate(void);
 
+        		void OnSnsAuthenticated(Osp::Social::Services::SnsAuthResult&snsAuthResult,
+        				result r,const String& errorCode,
+        				const String&errorMsg);
+
+        		void OnSnsLoggedInStatusReceived(RequestId reqId,Osp::Base::String& serviceProvider,
+        				bool isLoggedIn, result r,
+        				const Osp::Base::String& errorCode,
+        				const Osp::Base::String& errorMsg);
+
+        		result UploadPhoto(void);
+
+        		void OnSnsPhotoReceived(RequestId reqId,Osp::Social::Services::SnsPhotoInfo *pPhoto,
+        				result r,const Osp::Base::String &errorCode,
+        				const Osp::Base::String &errorMsg);
+
+        		void OnSnsPhotosByUserReceivedN(RequestId reqId,
+        				Osp::Base::Collection::IList *pPhotoList,
+        				bool hasNext,Osp::Social::Services::SnsPagingParam& pagingParam,result r,
+        				const Osp::Base::String &errorCode,
+        				const Osp::Base::String &errorMsg);
+
+        		void OnSnsPhotosInAlbumReceivedN(RequestId reqId,
+        				Osp::Base::Collection::IList *pPhotoList,
+        				bool hasNext,Osp::Social::Services::SnsPagingParam& pagingParam,
+        				result r,const Osp::Base::String &errorCode,
+        				const Osp::Base::String &errorMsg);
+
+        		void OnSnsPhotoUploaded(RequestId reqId,
+        				Osp::Base::String &serviceProvider,Osp::Base::String *pPhotoId,result r,
+        				const Osp::Base::String &errorCode,
+        				const Osp::Base::String &errorMsg);
+
+        	};
+
+result
+MyFacebookClass::configure(void)
+{
+	result r = E_SUCCESS;
+	String serviceProvider = "facebook";
+    r = pSNSAuthenticator->Authenticate(serviceProvider, appID, appSecret);
+
+    if(IsFailed(r))
+    {
+    	AppLogException( "Facebook fulerou");
+    	return r;
+    }
+}
+
+result
+MyFacebookClass::uploadPhoto(void)
+{
+	pSnsGateway->Construct(*this, this, null, null);
+	r = pSnsGateway->UploadPhoto(serviceProvider, null, *pContentInfo, reqId);
+
+	RequestId reqId = INVALID_REQUEST_ID;
+	result r = E_SUCCESS;
+
+	String filepath = "/res/bada.png";
+	String serviceProvider = pSNSAuthResult->GetServiceProvider();
+	SnsUploadContentInfo* pContentInfo = newSnsUploadContentInfo(SNS_UPLOAD_CONTENT_PHOTO, filepath);
+
+	r = pSnsGateway->UploadPhoto(serviceProvider, null, *pContentInfo,reqId);
+	delete pContentInfo;p
+	ContentInfo = null;
+}
+
+void MyFacebookClass::OnSnsPhotoUploaded(RequestId reqId, Osp::Base::String&serviceProvider,
+		Osp::Base::String *pPhotoId, result r,
+		const Osp::Base::String &errorCode,
+		const Osp::Base::String &errorMsg)
+{
+	if (!isFailed(r))
+	{
+		AppLog("Successfully uploaded the photo with photoId as%ls",pPhotoId->GetPointer());
+	}
+}
 
 CameraForm::CameraForm(void)
 {
@@ -93,7 +178,9 @@ CameraForm::OnInitializing(void)
 {
         result r = E_SUCCESS;
 
+
         AppLog("Orientation : %d", __orientation);
+
         r = __InitCamera();
         if ( r != E_SUCCESS )
         {
@@ -1336,7 +1423,7 @@ CameraForm::OnCameraPreviewed ( Osp::Base::ByteBuffer& previewedData , result r)
 			}
 		}
 
-Image* pImage = new Image();
+		Image* pImage = new Image();
 		pImage->Construct();
 	    Rectangle rect(FORM_X, FORM_Y, FORM_WIDTH, FORM_HEIGHT);
 
@@ -1345,7 +1432,6 @@ Image* pImage = new Image();
 		if (IsFailed(r)){
 			AppLog("nao carregou imagem");
 		}
-
 
 /*
 		if ( __startType != CAMERA_START_NO_PREVIEW_WITHOUT_CALLBACK )
